@@ -1,0 +1,137 @@
+{
+	"name": "PL_HANDLE_TO_ARRAYS",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set variable left",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_left_elements",
+					"value": {
+						"value": "@take(variables('var_input_array'),pipeline().parameters.par_index1)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variable right",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_rigth_elements",
+					"value": {
+						"value": "@skip(variables('var_input_array'), add(pipeline().parameters.par_index2,1))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variableOutput",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set variable left",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set variable right",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_output_array",
+					"value": {
+						"value": "@createArray(variables('var_left_elements'),\nvariables('var_input_array')[pipeline().parameters.par_index1],\nvariables('var_input_array')[pipeline().parameters.par_index2],\nvariables('var_rigth_elements')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variableFinal",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set variableOutput",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_resultado_final",
+					"value": {
+						"value": "@json(concat('[',replace(replace(string(variables('var_output_array')),'[',''),']',''),']'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"par_index1": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"par_index2": {
+				"type": "int",
+				"defaultValue": 3
+			}
+		},
+		"variables": {
+			"var_input_array": {
+				"type": "Array",
+				"defaultValue": [
+					54,
+					32,
+					68,
+					43,
+					59,
+					62,
+					71
+				]
+			},
+			"var_left_elements": {
+				"type": "Array"
+			},
+			"var_rigth_elements": {
+				"type": "Array"
+			},
+			"var_output_array": {
+				"type": "Array"
+			},
+			"var_resultado_final": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-25T21:49:54Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

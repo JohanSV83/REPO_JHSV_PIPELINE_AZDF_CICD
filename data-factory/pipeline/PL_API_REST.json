@@ -1,0 +1,143 @@
+{
+	"name": "PL_API_REST",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEachNames",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.param_names",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Copy data API REST",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "HttpReadSettings",
+										"requestMethod": "GET",
+										"requestTimeout": ""
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_HTTP",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_filename": {
+											"value": "@concat(item().name,'.csv')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_http_sink",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_folder": "datos",
+										"p_file": {
+											"value": "@{item().name}.csv",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"param_names": {
+				"type": "array",
+				"defaultValue": [
+					{
+						"name": "AdventureWorks_Products"
+					},
+					{
+						"name": "AdventureWorks_Returns"
+					},
+					{
+						"name": "AdventureWorks_Sales_2016"
+					},
+					{
+						"name": "AdventureWorks_Sales_2017"
+					},
+					{
+						"name": "AdventureWorks_Territories"
+					}
+				]
+			}
+		},
+		"variables": {
+			"var": {
+				"type": "Array",
+				"defaultValue": [
+					{
+						"name": "AdventureWorks_Products"
+					},
+					{
+						"name": "AdventureWorks_Returns"
+					},
+					{
+						"name": "AdventureWorks_Sales_2016"
+					},
+					{
+						"name": "AdventureWorks_Sales_2017"
+					},
+					{
+						"name": "AdventureWorks_Territories"
+					}
+				]
+			}
+		},
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-20T04:59:37Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

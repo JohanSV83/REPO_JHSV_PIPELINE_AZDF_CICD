@@ -1,0 +1,37 @@
+{
+	"name": "PL_CALL_OTHER_ADF_PIPELINE",
+	"properties": {
+		"activities": [
+			{
+				"name": "WebRestApi",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://management.azure.com/subscriptions/6a079b97-aa0f-40ef-9f44-6dcc53b02a35/resourceGroups/rg-203/providers/Microsoft.DataFactory/factories/adfjhsvprod01/pipelines/PL_CALL_OTHER_ADF_PIPELINE/createRun?api-version=2018-06-01",
+					"body": {
+						"param1": "Johan Sanchez Villano"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://management.azure.com"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-26T06:09:41Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

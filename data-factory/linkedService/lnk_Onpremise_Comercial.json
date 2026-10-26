@@ -1,0 +1,29 @@
+{
+	"name": "lnk_Onpremise_Comercial",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"servername": {
+				"type": "string"
+			},
+			"databasename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"server": "LAPTOP-RQJV90QN",
+			"database": "db_comercial",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "Windows",
+			"userName": "JOHAN_BIGDATA",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJhOTAxNGMxZi1lY2ZmLTQ4OTMtYTVhYi1hOTk4ZDNjMjkzYTciLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "IRTOmpremiseProdCom",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

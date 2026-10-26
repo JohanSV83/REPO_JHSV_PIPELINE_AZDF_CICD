@@ -1,0 +1,261 @@
+{
+	"name": "PL_EMPTY_CONTAINER_TO_TABLESQL",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get MetadataContainer",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_source_container_list",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEachItems",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get MetadataContainer",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get MetadataContainer').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Get MetadataFolder",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_source_containFolders",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_container": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"childItems"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							}
+						},
+						{
+							"name": "If ConditionFiles",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "Get MetadataFolder",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@empty(activity('Get MetadataFolder').output.childItems)",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Append variableNoEmpty",
+										"type": "AppendVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "var_notempty_values",
+											"value": {
+												"value": "@string(item().name)",
+												"type": "Expression"
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Append variableEmpty",
+										"type": "AppendVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "var_empty_values",
+											"value": {
+												"value": "@string(item().name)",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Copy data table sql",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ForEachItems",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "C_EMPTY",
+								"value": {
+									"value": "@{variables('var_empty_values')}",
+									"type": "Expression"
+								}
+							},
+							{
+								"name": "C_NOTEMPTY",
+								"value": {
+									"value": "@{variables('var_notempty_values')}",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SqlServerSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"tableOption": "autoCreate"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "C_EMPTY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "C_EMPTY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "C_NOTEMPTY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "C_NOTEMPTY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_source_raw",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_container": "raw"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_ompremise_dw_comercial",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"variables": {
+			"var_empty_values": {
+				"type": "Array"
+			},
+			"var_notempty_values": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-22T23:20:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

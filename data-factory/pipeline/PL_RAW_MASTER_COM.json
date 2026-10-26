@@ -1,0 +1,163 @@
+{
+	"name": "PL_RAW_MASTER_COM",
+	"properties": {
+		"activities": [
+			{
+				"name": "LookupTablesMasterCom",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "select tablename,schemaname\nfrom\n(\nselect \n REPLACE(REPLACE(QUOTENAME(t.name),'[',''),']','') as tablename\n,REPLACE(REPLACE(QUOTENAME(SCHEMA_NAME(t.schema_id)),'[',''),']','') as schemaname\nfrom sys.tables as t\nwhere QUOTENAME(SCHEMA_NAME(t.schema_id)) not in ('[dbo]')\n) x\nwhere tablename in ('MEDIO','TIPO_MEDIO','COBERTURA','PRODUCTO','TIPO_PRODUCTO','EJECUTIVO','FORMA_FACTURA','CONDICION_PAGO','CLIENTE','CATEGORIA_DIGITAL','TIPO_COMPONENTE')\n",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_Onpremise_comercial",
+						"type": "DatasetReference",
+						"parameters": {
+							"servername": {
+								"value": "@pipeline().parameters.servername",
+								"type": "Expression"
+							},
+							"databasename": {
+								"value": "@pipeline().parameters.databasename",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEachTablesMasterCom",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LookupTablesMasterCom",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LookupTablesMasterCom').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Copy data To Raw",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "@concat('select * from ',item().schemaname,'.',item().tablename)",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_Onpremise_comercial",
+									"type": "DatasetReference",
+									"parameters": {
+										"servername": {
+											"value": "@pipeline().parameters.servername",
+											"type": "Expression"
+										},
+										"databasename": {
+											"value": "@pipeline().parameters.databasename",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_raw_maestros_parquet",
+									"type": "DatasetReference",
+									"parameters": {
+										"servername": {
+											"value": "@pipeline().parameters.servername",
+											"type": "Expression"
+										},
+										"databasename": {
+											"value": "@pipeline().parameters.databasename",
+											"type": "Expression"
+										},
+										"schemaname": {
+											"value": "@item().schemaname",
+											"type": "Expression"
+										},
+										"tablename": {
+											"value": "@item().tablename",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"servername": {
+				"type": "string",
+				"defaultValue": "LAPTOP-RQJV90QN"
+			},
+			"databasename": {
+				"type": "string",
+				"defaultValue": "DB_COMERCIAL"
+			}
+		},
+		"folder": {
+			"name": "PROYECTO_COMECIAL_PRODUCTO_DIGITAL/PL_RAW_MASTER_TABLES_COM/PL_MASTER_TABLES"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-09-28T20:42:53Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

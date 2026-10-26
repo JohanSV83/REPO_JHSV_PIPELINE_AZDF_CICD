@@ -1,0 +1,17 @@
+{
+	"name": "ds_ompremise_dw_comercial",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lnk_Onpremise_dwComercial",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Table_Container_Empty"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

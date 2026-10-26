@@ -1,0 +1,66 @@
+{
+	"name": "DataflowTransArrayFlaten",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_target_dumy_target",
+						"type": "DatasetReference"
+					},
+					"name": "sourceSink"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_target_dumy_target",
+						"type": "DatasetReference"
+					},
+					"name": "sinkrewriteFilename",
+					"rejectedDataLinkedService": {
+						"referenceName": "lnk_stgen2_raw_data",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumnReplaceCode"
+				},
+				{
+					"name": "flatten1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          FILENAME as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> sourceSink",
+				"sourceSink derive(FILENAME = split(replace(replace(replace(replace(FILENAME,'/',''),'\"',''),'[',''),']',''),',')) ~> derivedColumnReplaceCode",
+				"derivedColumnReplaceCode foldDown(unroll(FILENAME),",
+				"     mapColumn(",
+				"          FILENAME",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
+				"flatten1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['filename.csv'],",
+				"     truncate: true,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          FILENAME",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> sinkrewriteFilename"
+			]
+		}
+	}
+}

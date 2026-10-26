@@ -1,0 +1,25 @@
+{
+	"name": "ds_target_dumy_target",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lnk_stgen2_raw_data",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "filename.csv",
+				"folderPath": "TARGET_DUMMY_FILE_CSV",
+				"fileSystem": "raw"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

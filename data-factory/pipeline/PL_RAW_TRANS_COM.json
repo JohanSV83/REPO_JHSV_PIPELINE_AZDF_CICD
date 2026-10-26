@@ -1,0 +1,234 @@
+{
+	"name": "PL_RAW_TRANS_COM",
+	"properties": {
+		"activities": [
+			{
+				"name": "LookupLastLoad",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_lastload_json",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Copy data PedidoIncremental",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupLastLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "LookupLastestLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "SELECT * FROM usr_comsys.PEDIDO\nWHERE COALESCE(D_MODIFICADO,'1900-02-01 00:00:00.000')>'@{activity('LookupLastLoad').output.firstRow.lastload}'\nAND COALESCE(D_MODIFICADO,'1900-02-01 00:00:00.000')<='@{activity('LookupLastestLoad').output.firstRow.latestload}'",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_Onpremise_comercial",
+						"type": "DatasetReference",
+						"parameters": {
+							"servername": {
+								"value": "@pipeline().parameters.servername",
+								"type": "Expression"
+							},
+							"databasename": {
+								"value": "@pipeline().parameters.databasename",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_raw_trans_parquet",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LookupLastestLoad",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "SELECT max(COALESCE(D_MODIFICADO,'1900-02-01 00:00:00.000')) as latestload FROM usr_comsys.PEDIDO",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_Onpremise_comercial",
+						"type": "DatasetReference",
+						"parameters": {
+							"servername": {
+								"value": "@pipeline().parameters.servername",
+								"type": "Expression"
+							},
+							"databasename": {
+								"value": "@pipeline().parameters.databasename",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "WatermartUpdate",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Copy data PedidoIncremental",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "lastload",
+								"value": {
+									"value": "@activity('LookupLastestLoad').output.firstRow.latestload",
+									"type": "Expression"
+								}
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_emptyjson",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_lastload_json",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"parameters": {
+			"servername": {
+				"type": "string",
+				"defaultValue": "LAPTOP-RQJV90QN"
+			},
+			"databasename": {
+				"type": "string",
+				"defaultValue": "DB_COMERCIAL"
+			}
+		},
+		"variables": {
+			"VARDATETIME": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "PROYECTO_COMECIAL_PRODUCTO_DIGITAL/PL_RAW_MASTER_TABLES_COM/PL_MASTER_TABLES"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-09-28T22:43:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,21 @@
+{
+	"name": "ds_lastloadpedet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lnk_stgen2_raw_data",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "lastload_pedidodet.json",
+				"folderPath": "monitor/lastload",
+				"fileSystem": "raw"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

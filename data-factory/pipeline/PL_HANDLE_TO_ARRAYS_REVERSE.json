@@ -1,0 +1,137 @@
+{
+	"name": "PL_HANDLE_TO_ARRAYS_REVERSE",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set variableLength",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_lenght_array",
+					"value": {
+						"value": "@string(length(pipeline().parameters.P_input_array))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variableRangeOfIndex",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set variableLength",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_rangeOfIndex",
+					"value": {
+						"value": "@range(0,length(pipeline().parameters.P_input_array))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEachArray",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set variableRangeOfIndex",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('var_rangeOfIndex')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Append variableOutput",
+							"type": "AppendVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "var_output_array",
+								"value": {
+									"value": "@pipeline().parameters.P_input_array[sub(length(pipeline().parameters.P_input_array),add(item(),1))]",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set variablefFinal",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ForEachArray",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "var_final",
+					"value": {
+						"value": "@variables('var_output_array')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"P_input_array": {
+				"type": "array",
+				"defaultValue": [
+					"a",
+					"b",
+					"c",
+					"d"
+				]
+			}
+		},
+		"variables": {
+			"var_lenght_array": {
+				"type": "String"
+			},
+			"var_rangeOfIndex": {
+				"type": "Array"
+			},
+			"var_output_array": {
+				"type": "Array"
+			},
+			"var_final": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-25T22:45:16Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

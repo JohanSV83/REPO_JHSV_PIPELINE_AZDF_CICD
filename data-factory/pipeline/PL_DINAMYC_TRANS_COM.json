@@ -1,0 +1,300 @@
+{
+	"name": "PL_DINAMYC_TRANS_COM",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEachTablesTransacCom",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.lista_tablas_ventanasTiempo",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "LookupbBusTableslastloadTrans",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"dataset": {
+									"referenceName": "ds_raw_lastload_dinamyc",
+									"type": "DatasetReference",
+									"parameters": {
+										"nombretabla": {
+											"value": "@item().nombretabla",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "Lookuplastestload",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT \nMAX(COALESCE(@{item().nombrecolumna},'1900-01-01 00:00:00.000'))\nas latestload \nFROM @{concat('usr_comsys','.',item().nombretabla)}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "ds_Onpremise_comercial",
+									"type": "DatasetReference",
+									"parameters": {
+										"servername": {
+											"value": "@pipeline().parameters.servername",
+											"type": "Expression"
+										},
+										"databasename": {
+											"value": "@pipeline().parameters.databasename",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "Copy data IncrementalDynamicTables",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "LookupbBusTableslastloadTrans",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Lookuplastestload",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT *\nFROM @{concat('usr_comsys','.',item().nombretabla)} \nWHERE coalesce(D_MODIFICADO,'1900-02-01 00:00:00.000')>'@{activity('LookupbBusTableslastloadTrans').output.firstRow.lastload}'\nAND coalesce(D_MODIFICADO,'1900-02-01 00:00:00.000')<='@{activity('Lookuplastestload').output.firstRow.latestload}'\n\n",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_Onpremise_comercial",
+									"type": "DatasetReference",
+									"parameters": {
+										"servername": {
+											"value": "@pipeline().parameters.servername",
+											"type": "Expression"
+										},
+										"databasename": {
+											"value": "@pipeline().parameters.databasename",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_raw_transaccionales_parquet",
+									"type": "DatasetReference",
+									"parameters": {
+										"servername": {
+											"value": "@pipeline().parameters.servername",
+											"type": "Expression"
+										},
+										"databasename": {
+											"value": "@pipeline().parameters.databasename",
+											"type": "Expression"
+										},
+										"tablename": {
+											"value": "@item().nombretabla",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Copy data WatermarDinamyc",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Copy data IncrementalDynamicTables",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "lastload",
+											"value": {
+												"value": "@activity('Lookuplastestload').output.firstRow.latestload",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_emptyjson",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_dynamic_lastload",
+									"type": "DatasetReference",
+									"parameters": {
+										"nombretabla": {
+											"value": "@item().nombretabla",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"lista_tablas_ventanasTiempo": {
+				"type": "array",
+				"defaultValue": [
+					{
+						"nombretabla": "PEDIDO",
+						"nombrecolumna": "D_MODIFICADO"
+					},
+					{
+						"nombretabla": "PEDIDO_DETALLE",
+						"nombrecolumna": "D_MODIFICADO"
+					},
+					{
+						"nombretabla": "CONTRATO",
+						"nombrecolumna": "D_MODIFICADO"
+					},
+					{
+						"nombretabla": "ORDEN",
+						"nombrecolumna": "D_MODIFICADO"
+					},
+					{
+						"nombretabla": "ORDEN_DETALLE",
+						"nombrecolumna": "D_MODIFICADO"
+					}
+				]
+			},
+			"servername": {
+				"type": "string",
+				"defaultValue": "LAPTOP-RQJV90QN"
+			},
+			"databasename": {
+				"type": "string",
+				"defaultValue": "DB_COMERCIAL"
+			}
+		},
+		"folder": {
+			"name": "PROYECTO_COMECIAL_PRODUCTO_DIGITAL/PL_RAW_MASTER_TABLES_COM/PL_MASTER_TABLES"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-09-29T21:57:12Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

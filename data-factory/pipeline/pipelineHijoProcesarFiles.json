@@ -1,0 +1,179 @@
+{
+	"name": "pipelineHijoProcesarFiles",
+	"properties": {
+		"activities": [
+			{
+				"name": "UntilBoolean",
+				"type": "Until",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@bool(variables('v_flag'))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "LookupValidarStatus",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT status FROM  dbo.table_status where fileName='@{pipeline().parameters.P_fileName}'",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "ds_ompremise_dw_comercial",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "If ConditionStatusIsTrue",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "LookupValidarStatus",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(activity('LookupValidarStatus').output.firstRow.status,'Y')",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "Set variableTrue",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "v_flag",
+											"value": "True"
+										}
+									}
+								]
+							}
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			},
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "UntilBoolean",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_stgen_raw_data",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_folder": "httpdata"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_target_tow_param",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_container": "raw",
+							"p_folder_target": "target_stg_data",
+							"p_file_name": {
+								"value": "@pipeline().parameters.P_fileName",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"P_fileName": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"v_flag": {
+				"type": "String",
+				"defaultValue": "False"
+			}
+		},
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-25T01:25:10Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

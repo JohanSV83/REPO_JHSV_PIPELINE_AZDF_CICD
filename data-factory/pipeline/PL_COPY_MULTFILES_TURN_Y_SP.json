@@ -1,0 +1,233 @@
+{
+	"name": "PL_COPY_MULTFILES_TURN_Y_SP",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get MetadataRawFiles",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "Set variablestartTime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_stgen_raw_data",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_folder": {
+								"value": "@pipeline().parameters.p_folder",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEachIterarFilesItems",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get MetadataRawFiles",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get MetadataRawFiles').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute Pipeline child Files",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pipelineHijoProcesarFiles",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"P_fileName": {
+										"value": "@item().name",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set variablestartTime",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_starTime",
+					"value": {
+						"value": "@formatDateTime(utcNow(),'yyyy-MM-ddTHH:MM:ss')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variableendTime",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ForEachIterarFilesItems",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_endTime",
+					"value": {
+						"value": "@formatDateTime(utcNow(),'yyyy-MM-ddTHH:MM:ss')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Stored procedure LogPileline",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set variableendTime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[RunExecutionPileline]",
+					"storedProcedureParameters": {
+						"PL_endTime": {
+							"value": {
+								"value": "@variables('v_endTime')",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"PL_name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"PL_runId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"PL_startTime": {
+							"value": {
+								"value": "@variables('v_starTime')",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"PL_statusPileline": {
+							"value": {
+								"value": "OK",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"PL_TriggerName": {
+							"value": {
+								"value": "@pipeline().TriggerName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"PL_TypeTrigger": {
+							"value": {
+								"value": "@pipeline().TriggerType",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "lnk_Onpremise_dwComercial",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"p_folder": {
+				"type": "string",
+				"defaultValue": "httpdata"
+			}
+		},
+		"variables": {
+			"v_starTime": {
+				"type": "String"
+			},
+			"v_endTime": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-24T02:37:17Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

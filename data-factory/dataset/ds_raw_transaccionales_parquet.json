@@ -1,0 +1,35 @@
+{
+	"name": "ds_raw_transaccionales_parquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lnk_stgen2_raw_data",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"servername": {
+				"type": "string"
+			},
+			"databasename": {
+				"type": "string"
+			},
+			"tablename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@concat(dataset().servername,'/',dataset().databasename,'/usr_comsys','/',dataset().tablename,'/','anio=',formatDateTime(utcNow(),'yyyy'),'/','mes=',formatDateTime(utcNow(),'MM'),'/','dia=',formatDateTime(utcNow(),'dd'))",
+					"type": "Expression"
+				},
+				"fileSystem": "raw"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
