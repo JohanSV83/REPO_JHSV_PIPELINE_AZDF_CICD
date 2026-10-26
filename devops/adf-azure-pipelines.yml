@@ -28,16 +28,17 @@ stages:
       dataFactoryName: adfjhsvprod01
       serviceConnectionName: CICD_DEV
       overrideParameters: >
-        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)
-        -lnk_stgen2_raw_data_accountKey $(lnk_stgen2_raw_data_accountKey)
-        -lnk_Onpremise_Comercial_properties_typeProperties_server $(lnk_Onpremise_Comercial_properties_typeProperties_server)
-        -lnk_Onpremise_Comercial_properties_typeProperties_database $(lnk_Onpremise_Comercial_properties_typeProperties_database)
-        -lnk_Onpremise_Comercial_properties_typeProperties_userName $(lnk_Onpremise_Comercial_properties_typeProperties_userName)
+        -LNK_HTTP_API_REST_properties_typeProperties_url $(LNK_HTTP_API_REST_properties_typeProperties_url)
         -lnk_Onpremise_Comercial_password $(lnk_Onpremise_Comercial_password)
-        -lnk_Onpremise_dwComercial_properties_typeProperties_server $(lnk_Onpremise_dwComercial_properties_typeProperties_server)
+        -lnk_Onpremise_Comercial_properties_typeProperties_database $(lnk_Onpremise_Comercial_properties_typeProperties_database)
+        -lnk_Onpremise_Comercial_properties_typeProperties_server $(lnk_Onpremise_Comercial_properties_typeProperties_server)
+        -lnk_Onpremise_Comercial_properties_typeProperties_userName $(lnk_Onpremise_Comercial_properties_typeProperties_userName)
+        -lnk_Onpremise_dwComercial_password $(lnk_Onpremise_dwComercial_password)
         -lnk_Onpremise_dwComercial_properties_typeProperties_database $(lnk_Onpremise_dwComercial_properties_typeProperties_database)
+        -lnk_Onpremise_dwComercial_properties_typeProperties_server $(lnk_Onpremise_dwComercial_properties_typeProperties_server)
         -lnk_Onpremise_dwComercial_properties_typeProperties_userName $(lnk_Onpremise_dwComercial_properties_typeProperties_userName)
-        -lnk_Onpremise_dwComercial_password $(lnk_Onpremise_dwComercial_password)              
+        -lnk_stgen2_raw_data_accountKey $(lnk_stgen2_raw_data_accountKey)
+        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)
 
 - stage: PROD
   variables:
@@ -51,13 +52,14 @@ stages:
       dataFactoryName: adfjhsvprod02
       serviceConnectionName: CICD_PROD
       overrideParameters: >
-        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)        
-        -lnk_stgen2_raw_data_accountKey $(lnk_stgen2_raw_data_accountKey)
-        -lnk_Onpremise_Comercial_properties_typeProperties_server $(lnk_Onpremise_Comercial_properties_typeProperties_server)
-        -lnk_Onpremise_Comercial_properties_typeProperties_database $(lnk_Onpremise_Comercial_properties_typeProperties_database)
-        -lnk_Onpremise_Comercial_properties_typeProperties_userName $(lnk_Onpremise_Comercial_properties_typeProperties_userName)
+        -LNK_HTTP_API_REST_properties_typeProperties_url $(LNK_HTTP_API_REST_properties_typeProperties_url)
         -lnk_Onpremise_Comercial_password $(lnk_Onpremise_Comercial_password)
-        -lnk_Onpremise_dwComercial_properties_typeProperties_server $(lnk_Onpremise_dwComercial_properties_typeProperties_server)
+        -lnk_Onpremise_Comercial_properties_typeProperties_database $(lnk_Onpremise_Comercial_properties_typeProperties_database)
+        -lnk_Onpremise_Comercial_properties_typeProperties_server $(lnk_Onpremise_Comercial_properties_typeProperties_server)
+        -lnk_Onpremise_Comercial_properties_typeProperties_userName $(lnk_Onpremise_Comercial_properties_typeProperties_userName)
+        -lnk_Onpremise_dwComercial_password $(lnk_Onpremise_dwComercial_password)
         -lnk_Onpremise_dwComercial_properties_typeProperties_database $(lnk_Onpremise_dwComercial_properties_typeProperties_database)
+        -lnk_Onpremise_dwComercial_properties_typeProperties_server $(lnk_Onpremise_dwComercial_properties_typeProperties_server)
         -lnk_Onpremise_dwComercial_properties_typeProperties_userName $(lnk_Onpremise_dwComercial_properties_typeProperties_userName)
-        -lnk_Onpremise_dwComercial_password $(lnk_Onpremise_dwComercial_password)                      
+        -lnk_stgen2_raw_data_accountKey $(lnk_stgen2_raw_data_accountKey)
+        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)                
