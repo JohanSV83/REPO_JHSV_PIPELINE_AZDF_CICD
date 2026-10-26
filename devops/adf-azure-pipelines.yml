@@ -15,3 +15,31 @@ stages:
       dataFactoryName: adfjhsvprod01
       repoRootFolder: /data-factory/
       packageJsonFolder: /devops/
+
+- stage: DEV
+  variables:
+  - group: DEV
+  jobs:
+  - template: adf-build-job.yml
+    parameters:
+      environmentName: DEV
+      subscriptionId: 6a079b97-aa0f-40ef-9f44-6dcc53b02a35
+      resourceGroupName: rg-203
+      dataFactoryName: adfjhsvprod01
+      serviceConnectionName: CICD_DEV
+      overrideParameters: >
+        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)      
+
+- stage: PROD
+  variables:
+  - group: PROD
+  jobs:
+  - template: adf-build-job.yml
+    parameters:
+      environmentName: PROD
+      subscriptionId: 6a079b97-aa0f-40ef-9f44-6dcc53b02a35
+      resourceGroupName: rg-203-prod
+      dataFactoryName: adfjhsvprod02
+      serviceConnectionName: CICD_PROD
+      overrideParameters: >
+        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)        
