@@ -40,4 +40,27 @@ stages:
         -lnk_stgen2_raw_data_accountKey $(lnk_stgen2_raw_data_accountKey)
         -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)
 
+- stage: PROD
+  variables:
+  - group: PROD
+  jobs:
+  - template: adf-build-job.yml
+    parameters:
+      environmentName: PROD
+      subscriptionId: 6a079b97-aa0f-40ef-9f44-6dcc53b02a35
+      resourceGroupName: rg-203-prod
+      dataFactoryName: adfjhsvprod02
+      serviceConnectionName: CICD_PROD
+      overrideParameters: >
+        -LNK_HTTP_API_REST_properties_typeProperties_url $(LNK_HTTP_API_REST_properties_typeProperties_url)
+        -lnk_Onpremise_Comercial_password $(lnk_Onpremise_Comercial_password)
+        -lnk_Onpremise_Comercial_properties_typeProperties_database $(lnk_Onpremise_Comercial_properties_typeProperties_database)
+        -lnk_Onpremise_Comercial_properties_typeProperties_server $(lnk_Onpremise_Comercial_properties_typeProperties_server)
+        -lnk_Onpremise_Comercial_properties_typeProperties_userName $(lnk_Onpremise_Comercial_properties_typeProperties_userName)
+        -lnk_Onpremise_dwComercial_password $(lnk_Onpremise_dwComercial_password)
+        -lnk_Onpremise_dwComercial_properties_typeProperties_database $(lnk_Onpremise_dwComercial_properties_typeProperties_database)
+        -lnk_Onpremise_dwComercial_properties_typeProperties_server $(lnk_Onpremise_dwComercial_properties_typeProperties_server)
+        -lnk_Onpremise_dwComercial_properties_typeProperties_userName $(lnk_Onpremise_dwComercial_properties_typeProperties_userName)
+        -lnk_stgen2_raw_data_accountKey $(lnk_stgen2_raw_data_accountKey)
+        -lnk_stgen2_raw_data_properties_typeProperties_url $(lnk_stgen2_raw_data_properties_typeProperties_url)
               
