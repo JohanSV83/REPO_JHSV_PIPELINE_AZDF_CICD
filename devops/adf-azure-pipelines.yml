@@ -22,6 +22,7 @@ stages:
   jobs:
   - template: adf-deploy-job.yml
     parameters:
+      excludeIntegrationRuntime: true
       environmentName: DEV
       subscriptionId: 6a079b97-aa0f-40ef-9f44-6dcc53b02a35
       resourceGroupName: rg-203
