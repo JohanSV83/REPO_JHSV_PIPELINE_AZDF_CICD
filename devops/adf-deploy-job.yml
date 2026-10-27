@@ -50,7 +50,10 @@ jobs:
 
         - script: 'ls $(artifactsDirectory)'
           displayName: 'List Artifact contents'
-          
+
+        - script: cp $(artifactsDirectory)/ARMTemplateForFactory.json $(artifactsDirectory)/ARMTemplateForFactory.original.json
+          displayName: 'Guardar copia original del ARM template'
+
         - ${{ if eq(parameters.excludeIntegrationRuntime, true) }}:
           - task: PowerShell@2
             displayName: 'Quitar Integration Runtime del ARM template'
@@ -100,7 +103,7 @@ jobs:
           inputs:
             azureSubscription: '${{ parameters.serviceConnectionName }}'
             ScriptPath: '$(artifactsDirectory)/PrePostDeploymentScript.ps1'
-            ScriptArguments: "-armTemplate $(artifactsDirectory)/ARMTemplateForFactory.json \
+            ScriptArguments: "-armTemplate $(artifactsDirectory)/ARMTemplateForFactory.original.json \
               -ResourceGroupName ${{ parameters.resourceGroupName }} \
               -DataFactoryName ${{ parameters.dataFactoryName }} \
               -predeployment $false \
