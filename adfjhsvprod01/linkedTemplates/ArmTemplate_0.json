@@ -1,0 +1,885 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adfjhsvprod01"
+		},
+		"lnk_stgen2_raw_data_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'lnk_stgen2_raw_data'"
+		},
+		"LNK_HTTP_API_REST_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://github.com/anshlambagit"
+		},
+		"lnk_stgen2_raw_data_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://stgjhsvprod01.dfs.core.windows.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/default')]",
+			"type": "Microsoft.DataFactory/factories/globalparameters",
+			"apiVersion": "2018-06-01",
+			"properties": {},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_CALL_OTHER_ADF_PIPELINE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "WebRestApi",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": "https://management.azure.com/subscriptions/6a079b97-aa0f-40ef-9f44-6dcc53b02a35/resourceGroups/rg-203/providers/Microsoft.DataFactory/factories/adfjhsvprod01/pipelines/PL_CALL_OTHER_ADF_PIPELINE/createRun?api-version=2018-06-01",
+							"body": {
+								"param1": "Johan Sanchez Villano"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": "https://management.azure.com"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-10-26T06:09:41Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_HANDLE_TO_ARRAYS')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set variable left",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_left_elements",
+							"value": {
+								"value": "@take(variables('var_input_array'),pipeline().parameters.par_index1)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set variable right",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_rigth_elements",
+							"value": {
+								"value": "@skip(variables('var_input_array'), add(pipeline().parameters.par_index2,1))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set variableOutput",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set variable left",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Set variable right",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_output_array",
+							"value": {
+								"value": "@createArray(variables('var_left_elements'),\nvariables('var_input_array')[pipeline().parameters.par_index1],\nvariables('var_input_array')[pipeline().parameters.par_index2],\nvariables('var_rigth_elements')\n)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set variableFinal",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set variableOutput",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_resultado_final",
+							"value": {
+								"value": "@json(concat('[',replace(replace(string(variables('var_output_array')),'[',''),']',''),']'))",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"par_index1": {
+						"type": "int",
+						"defaultValue": 2
+					},
+					"par_index2": {
+						"type": "int",
+						"defaultValue": 3
+					}
+				},
+				"variables": {
+					"var_input_array": {
+						"type": "Array",
+						"defaultValue": [
+							54,
+							32,
+							68,
+							43,
+							59,
+							62,
+							71
+						]
+					},
+					"var_left_elements": {
+						"type": "Array"
+					},
+					"var_rigth_elements": {
+						"type": "Array"
+					},
+					"var_output_array": {
+						"type": "Array"
+					},
+					"var_resultado_final": {
+						"type": "Array"
+					}
+				},
+				"folder": {
+					"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-10-25T21:49:54Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_HANDLE_TO_ARRAYS_REVERSE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set variableLength",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_lenght_array",
+							"value": {
+								"value": "@string(length(pipeline().parameters.P_input_array))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set variableRangeOfIndex",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Set variableLength",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_rangeOfIndex",
+							"value": {
+								"value": "@range(0,length(pipeline().parameters.P_input_array))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEachArray",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Set variableRangeOfIndex",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('var_rangeOfIndex')",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Append variableOutput",
+									"type": "AppendVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "var_output_array",
+										"value": {
+											"value": "@pipeline().parameters.P_input_array[sub(length(pipeline().parameters.P_input_array),add(item(),1))]",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Set variablefFinal",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "ForEachArray",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_final",
+							"value": {
+								"value": "@variables('var_output_array')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"P_input_array": {
+						"type": "array",
+						"defaultValue": [
+							"a",
+							"b",
+							"c",
+							"d"
+						]
+					}
+				},
+				"variables": {
+					"var_lenght_array": {
+						"type": "String"
+					},
+					"var_rangeOfIndex": {
+						"type": "Array"
+					},
+					"var_output_array": {
+						"type": "Array"
+					},
+					"var_final": {
+						"type": "Array"
+					}
+				},
+				"folder": {
+					"name": "PORYECTO_TRAINING_ADVANCED_DE/RAW_DATA_DE/PIPELINE_DE_INTERVIEW"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-10-25T22:45:16Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LNK_HTTP_API_REST')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('LNK_HTTP_API_REST_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lnk_stgen2_raw_data')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('lnk_stgen2_raw_data_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('lnk_stgen2_raw_data_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/IRTOmpremiseProdCom')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_HTTP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LNK_HTTP_API_REST",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_filename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@concat('anshlambagit/ADFInterview/refs/heads/main/RawData/',dataset().p_filename)",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LNK_HTTP_API_REST')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_destination_two_param')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_folder": {
+						"type": "string"
+					},
+					"p_file": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().p_file",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().p_folder",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "artist_id",
+						"type": "String"
+					},
+					{
+						"name": "name",
+						"type": "String"
+					},
+					{
+						"name": "genre",
+						"type": "String"
+					},
+					{
+						"name": "country",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dynamic_lastload')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"nombretabla": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().nombretabla,'/','lastload.json')",
+							"type": "Expression"
+						},
+						"folderPath": "monitor/lastload",
+						"fileSystem": "raw"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_emptyjson')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "empty.json",
+						"folderPath": "monitor/emptyjson",
+						"fileSystem": "raw"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_http_sink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_folder": {
+						"type": "string"
+					},
+					"p_file": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().p_file",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('httpdata','/',dataset().p_folder)",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_lastload_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "lastload.json",
+						"folderPath": "monitor/lastload",
+						"fileSystem": "raw"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_lastloadpedet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "lastload_pedidodet.json",
+						"folderPath": "monitor/lastload",
+						"fileSystem": "raw"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_raw_lastload_dinamyc')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"nombretabla": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "lastload.json",
+						"folderPath": {
+							"value": "@concat('monitor/','lastload/',dataset().nombretabla)",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_raw_maestros_parquet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"servername": {
+						"type": "string"
+					},
+					"databasename": {
+						"type": "string"
+					},
+					"schemaname": {
+						"type": "string"
+					},
+					"tablename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().schemaname,'_',dataset().tablename,'.parquet')",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().servername,'/',dataset().databasename,'/',dataset().schemaname,'/',dataset().tablename,'/anio=',formatDateTime(utcnow(),'yyyy'),'/mes=',formatDateTime(utcnow(),'MM'),'/dia=',formatDateTime(utcnow(),'dd'))",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_raw_trans_parquet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "transactional/pedido_detalle",
+						"fileSystem": "raw"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_raw_transaccionales_parquet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"servername": {
+						"type": "string"
+					},
+					"databasename": {
+						"type": "string"
+					},
+					"tablename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat(dataset().servername,'/',dataset().databasename,'/usr_comsys','/',dataset().tablename,'/','anio=',formatDateTime(utcNow(),'yyyy'),'/','mes=',formatDateTime(utcNow(),'MM'),'/','dia=',formatDateTime(utcNow(),'dd'))",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_source')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_folder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().p_folder",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "artist_id",
+						"type": "String"
+					},
+					{
+						"name": "name",
+						"type": "String"
+					},
+					{
+						"name": "genre",
+						"type": "String"
+					},
+					{
+						"name": "country",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_source_2_param')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_stgen2_raw_data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_container": {
+						"type": "string"
+					},
+					"p_folder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().p_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().p_container",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_stgen2_raw_data')]"
+			]
+		}
+	]
+}

@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adfjhsvprod01"
+		},
+		"lnk_Onpremise_Comercial_password": {
+			"value": ""
+		},
+		"lnk_Onpremise_dwComercial_password": {
+			"value": ""
+		},
+		"lnk_stgen2_raw_data_accountKey": {
+			"value": ""
+		},
+		"LNK_HTTP_API_REST_properties_typeProperties_url": {
+			"value": "https://github.com/anshlambagit"
+		},
+		"lnk_Onpremise_Comercial_properties_typeProperties_server": {
+			"value": "LAPTOP-RQJV90QN"
+		},
+		"lnk_Onpremise_Comercial_properties_typeProperties_database": {
+			"value": "db_comercial"
+		},
+		"lnk_Onpremise_Comercial_properties_typeProperties_userName": {
+			"value": "JOHAN_BIGDATA"
+		},
+		"lnk_Onpremise_dwComercial_properties_typeProperties_server": {
+			"value": "LAPTOP-RQJV90QN"
+		},
+		"lnk_Onpremise_dwComercial_properties_typeProperties_database": {
+			"value": "DW_COMERCIAL"
+		},
+		"lnk_Onpremise_dwComercial_properties_typeProperties_userName": {
+			"value": "JOHAN_BIGDATA"
+		},
+		"lnk_stgen2_raw_data_properties_typeProperties_url": {
+			"value": "https://stgjhsvprod01.dfs.core.windows.net/"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
