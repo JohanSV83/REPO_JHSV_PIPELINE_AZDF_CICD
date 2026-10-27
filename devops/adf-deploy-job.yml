@@ -22,6 +22,11 @@ parameters:
   type: string
   default: 
 
+
+- name: excludeIntegrationRuntime
+  type: boolean
+  default: false
+
 jobs:
 - deployment: ${{ parameters.environmentName }}
   displayName: Deployment to ${{ parameters.environmentName }}
@@ -45,7 +50,25 @@ jobs:
 
         - script: 'ls $(artifactsDirectory)'
           displayName: 'List Artifact contents'
-     
+          
+        - ${{ if eq(parameters.excludeIntegrationRuntime, true) }}:
+          - task: PowerShell@2
+            displayName: 'Quitar Integration Runtime del ARM template'
+            inputs:
+              targetType: inline
+              pwsh: true
+              script: |
+                $path = "$(artifactsDirectory)/ARMTemplateForFactory.json"
+                $json = Get-Content $path -Raw | ConvertFrom-Json
+                $json.resources = @($json.resources | Where-Object { $_.type -notlike '*integrationRuntimes' })
+                foreach ($r in $json.resources) {
+                  if ($r.dependsOn) {
+                    $r.dependsOn = @($r.dependsOn | Where-Object { $_ -notlike '*integrationRuntimes*' })
+                  }
+                }
+                $json | ConvertTo-Json -Depth 100 | Set-Content $path
+                Write-Host "IR removido del template"  
+           
 
         - task: AzurePowerShell@5
           displayName: 'Stop Triggers'
