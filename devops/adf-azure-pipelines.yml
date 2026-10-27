@@ -20,7 +20,7 @@ stages:
   variables:
   - group: DEV
   jobs:
-  - template: adf-build-job.yml
+  - template: adf-deploy-job.yml
     parameters:
       environmentName: DEV
       subscriptionId: 6a079b97-aa0f-40ef-9f44-6dcc53b02a35
@@ -44,7 +44,7 @@ stages:
   variables:
   - group: PROD
   jobs:
-  - template: adf-build-job.yml
+  - template: adf-deploy-job.yml
     parameters:
       environmentName: PROD
       subscriptionId: 6a079b97-aa0f-40ef-9f44-6dcc53b02a35
